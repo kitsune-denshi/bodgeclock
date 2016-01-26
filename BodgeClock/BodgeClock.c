@@ -66,82 +66,108 @@ int main(void)
 	sei();
 	
     while(1)
-	{			
+	{	
+
+		//////////////////////////////
+		//Roll over digits if required		
+		//////////////////////////////
 		if(out_numbers[5] == 10)
 		{
 			out_numbers[5] = 0;
 			out_numbers[4]++;
 				
-			if(out_numbers[4] == 6)
-			{
-				out_numbers[4] = 0;
-				out_numbers[3]++;
-					
-				if(out_numbers[3] == 10)	
-				{
-					out_numbers[3] = 0;
-					out_numbers[2]++;
-						
-					if(out_numbers[2] == 6)
-					{
-						out_numbers[2] = 0;
-						out_numbers[1]++;
-							
-						//increment 10-hours and 09++ and 19++
-						if(out_numbers[1] == 10)
-						{
-							out_numbers[1] = 0;
-							out_numbers[0]++;
-						}
-								
-						//reset hours at 24
-						if((out_numbers[0]) == 2 && (out_numbers[1] == 4))
-						{
-							out_numbers[0] = 0;
-							out_numbers[1] = 0;
-						}	
-					}	
-				}
-			}
 		}
+
+		if(out_numbers[4] == 6)
+		{
+			out_numbers[4] = 0;
+			out_numbers[3]++;
+		}
+					
+		if(out_numbers[3] == 10)	
+		{
+			out_numbers[3] = 0;
+			out_numbers[2]++;
+		}
+
 	
+		if(out_numbers[2] == 6)
+		{
+			out_numbers[2] = 0;
+			out_numbers[1]++;
+		}	
+	
+		//increment 10-hours and 09++ and 19++
+		if(out_numbers[1] == 10)
+		{
+			out_numbers[1] = 0;
+			out_numbers[0]++;
+		}
+					
+		//reset hours at 24
+		if((out_numbers[0]) == 2 && (out_numbers[1] == 4))
+		{
+			out_numbers[0] = 0;
+			out_numbers[1] = 0;
+		}		
 		
-		
+
+		///////////////////////
+		//Deal with serial port		
+		///////////////////////
 		if(UCSR0A & (1<<RXC0))
 		{
+
 			temp = UDR0;
 			
+			//wait for peripheral to be ready
 			while (!(UCSR0A & (1<<UDRE0)));
+			
+			//echo
 			UDR0 = temp;
 			
-			if(in_counter == 6 && temp == 'x')
+
+			if(in_counter == 6)
 			{
-				cli();
-				out_numbers[5] = rx_numbers[5];
-				out_numbers[4] = rx_numbers[4];
-				out_numbers[3] = rx_numbers[3];
-				out_numbers[2] = rx_numbers[2];
-				out_numbers[1] = rx_numbers[1];
-				out_numbers[0] = rx_numbers[0];
-				sei();
+
+				//end of time?
+				if(temp == 'x')
+				{
+					cli();
+					out_numbers[5] = rx_numbers[5];
+					out_numbers[4] = rx_numbers[4];
+					out_numbers[3] = rx_numbers[3];
+					out_numbers[2] = rx_numbers[2];
+					out_numbers[1] = rx_numbers[1];
+					out_numbers[0] = rx_numbers[0];
+					sei();
+				}
+				else
+				{
+					//just roll and read another 6 digits
+					in_counter = 0;
+				}
 			}
 			
+			//reset (make sure there is no rubbish in buffer)
 			if(temp == 'b')
 			{
 				in_counter = 0;
 			}
-			else
+
+			//only store digits
+			if(temp >= '0' && temp <= '9')
 			{
-				if(temp >= '0' && temp <= '9')
-				{
-					rx_numbers[in_counter] = temp - '0';	
-				}
-				
+				rx_numbers[in_counter] = temp - '0';	
 				in_counter++;
 			}
+
 		}
 			
 		
+		//////////////////////////////////
+		//Go to sleep / wake up from sleep
+		//////////////////////////////////
 		if(!(PINB & 0x04))
 		{
 			set_sleep_mode(SLEEP_MODE_PWR_SAVE);
