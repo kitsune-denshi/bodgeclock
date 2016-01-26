@@ -16,7 +16,6 @@ const char portd_segments[10] = {248, 72, 188, 220, 76, 212, 244, 200, 252, 220}
 const char portb_segments[10] = {1, 0, 0, 0, 1, 1, 1, 0, 1, 1};
 const char portc_digits[6] = {32, 1, 2, 4, 8, 16};
 
-volatile uint16_t tick_counter;
 volatile uint8_t segment_counter;
 volatile uint8_t temp;
 volatile uint8_t in_counter;
@@ -27,7 +26,6 @@ volatile uint8_t in_sleep;
 
 int main(void)
 {
-	tick_counter = 0;
 	segment_counter = 0;
 	in_counter = 0;
 	in_sleep = 0;
@@ -116,7 +114,7 @@ int main(void)
 			while (!(UCSR0A & (1<<UDRE0)));
 			UDR0 = temp;
 			
-			if(in_counter == 6)
+			if(in_counter == 6 && temp == 'x')
 			{
 				cli();
 				out_numbers[5] = rx_numbers[5];
@@ -125,7 +123,6 @@ int main(void)
 				out_numbers[2] = rx_numbers[2];
 				out_numbers[1] = rx_numbers[1];
 				out_numbers[0] = rx_numbers[0];
-				tick_counter = 0;
 				sei();
 			}
 			
@@ -135,7 +132,11 @@ int main(void)
 			}
 			else
 			{
-				rx_numbers[in_counter] = temp - '0';
+				if(temp >= '0' && temp <= '9')
+				{
+					rx_numbers[in_counter] = temp - '0';	
+				}
+				
 				in_counter++;
 			}
 		}
